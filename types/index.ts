@@ -8,7 +8,9 @@ export interface CallLog {
   timeOfDelivered: string;
   remarks: string;
   followUp: number;
-  acknowledgedBy: string; // New field
+  acknowledgedBy: string;
+  createdAt: number;
+  callType: 'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation';
 }
 
 export type CallLogColumn = keyof Omit<CallLog, 'id' | 'followUp'>;

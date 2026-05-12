@@ -11,6 +11,14 @@ export function formatTimeHHMMH(date: Date = new Date()): string {
   return `${hours}${minutes}H`;
 }
 
+export function formatFullTimestamp(date: Date = new Date()): string {
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  return `${time} ${month}/${day}/${year}`;
+}
+
 /**
  * Parses a string where spaces are delimiters, but handles quotes for phrases.
  * Example: 'CLY 1234 "Room Name" "3 pillows" 1945H'
@@ -46,21 +54,22 @@ export function parseGuestRequests(logs: { guestReq: string }[]): Record<string,
   logs.forEach(log => {
     if (!log.guestReq) return;
     
-    // Split by comma or space if multiple items
-    const items = log.guestReq.split(/[, ]+/);
+    // Split by comma, space, or plus if multiple items
+    const items = log.guestReq.split(/[, +]+/);
     
     items.forEach(item => {
       const trimmed = item.trim().toLowerCase();
       if (!trimmed) return;
       
-      // Match number and label (e.g., "3bt", "bt")
-      const match = trimmed.match(/^(\d+)?([a-z]+)$/);
-      if (match) {
-        const count = match[1] ? parseInt(match[1], 10) : 1;
-        const label = match[2];
+      // Match number and label (e.g., "3bt", "bt", "2 pillows")
+      // First try to match something like "3bt" or "3 pillows"
+      const countMatch = trimmed.match(/^(\d+)\s*(.*)$/);
+      if (countMatch) {
+        const count = parseInt(countMatch[1], 10);
+        const label = countMatch[2] || "items"; // fallback if only number
         counts[label] = (counts[label] || 0) + count;
       } else {
-        // Fallback for non-standard labels
+        // Fallback for just labels without numbers (e.g., "bt")
         counts[trimmed] = (counts[trimmed] || 0) + 1;
       }
     });

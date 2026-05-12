@@ -6,11 +6,12 @@ import { CallLog } from '@/types';
 import { Keyboard } from 'lucide-react';
 
 interface AddEntryProps {
-  onAdd: (entry: Omit<CallLog, 'id' | 'followUp' | 'timeOfRequest' | 'acknowledgedBy'>) => void;
+  onAdd: (entry: Omit<CallLog, 'id' | 'followUp' | 'timeOfRequest' | 'acknowledgedBy' | 'createdAt'> & { callType: 'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation' }) => void;
 }
 
 export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
   const [input, setInput] = React.useState("");
+  const [callType, setCallType] = React.useState<'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation'>('guest');
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -61,25 +62,26 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
       
       // Handle potential extra fields if needed (pos 4/5)
       const remaining = guestReq.split(" ");
-      guestReq = remaining[0] || "";
+      guestReq = (remaining[0] || "").replace(/\./g, " ");
       timeOfDelivered = remaining[1] || "";
       remarks = remaining.slice(2).join(" ");
     } else {
       // Fallback to old positional logic if no numeric room is found
       lastName = (parts[1] || "").replace(/\./g, " ");
       roomNo = parts[2] || "";
-      guestReq = parts[3] || "";
+      guestReq = (parts[3] || "").replace(/\./g, " ");
       timeOfDelivered = parts[4] || "";
       remarks = parts.slice(5).join(" ");
     }
 
-    const newLog: Omit<CallLog, 'id' | 'followUp' | 'timeOfRequest' | 'acknowledgedBy'> = {
+    const newLog: Omit<CallLog, 'id' | 'followUp' | 'timeOfRequest' | 'acknowledgedBy' | 'createdAt'> & { callType: 'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation' } = {
       requestedBy,
       lastName,
       roomNo,
       guestReq,
       timeOfDelivered,
       remarks,
+      callType
     };
 
     onAdd(newLog);
@@ -88,6 +90,27 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
 
   return (
     <div className="w-full space-y-4">
+      <div className="flex flex-wrap gap-2 mb-2">
+        {(['guest', 'res_in', 'res_out', 'inq_in', 'inq_out', 'booking_confirmation'] as const).map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => setCallType(type)}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+              callType === type 
+                ? "bg-primary text-white shadow-md shadow-primary/20 scale-105" 
+                : "bg-white border border-border text-muted-foreground hover:bg-slate-50"
+            }`}
+          >
+            {type === 'guest' ? 'Guest Req' : 
+             type === 'res_in' ? 'Transfer (In)' : 
+             type === 'res_out' ? 'Transfer (Out)' : 
+             type === 'inq_in' ? 'Inq (In)' : 
+             type === 'inq_out' ? 'Inq (Out)' : 
+             'Booking Conf'}
+          </button>
+        ))}
+      </div>
       <div className="relative">
         <textarea
           value={input}
