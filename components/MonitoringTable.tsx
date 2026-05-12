@@ -3,9 +3,10 @@
 import React from 'react';
 import { CallLog } from '@/types';
 import { cn, hhmmhToInputTime, inputTimeToHHMMH } from '@/lib/utils';
-import { Trash2, MessageCircle } from 'lucide-react';
+import { Trash2, MessageCircle, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { formatFullTimestamp } from '@/lib/utils';
 
 interface MonitoringTableProps {
   data: CallLog[];
@@ -20,8 +21,9 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
         <thead>
           <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
             <th className="p-4 font-bold text-xs uppercase tracking-widest">Requested By</th>
-            <th className="p-4 font-bold text-xs uppercase tracking-widest">Last Name</th>
+            <th className="p-4 font-bold text-xs uppercase tracking-widest">Type</th>
             <th className="p-4 font-bold text-xs uppercase tracking-widest">Room No.</th>
+            <th className="p-4 font-bold text-xs uppercase tracking-widest">Last Name</th>
             <th className="p-4 font-bold text-xs uppercase tracking-widest">Guest Req</th>
             <th className="p-4 font-bold text-xs uppercase tracking-widest">Time of Request</th>
             <th className="p-4 font-bold text-xs uppercase tracking-widest">Time of Delivered</th>
@@ -40,7 +42,12 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: index * 0.05 }}
-                className="border-b border-border/30 hover:bg-muted/50 transition-colors group"
+                className={cn(
+                  "border-b transition-all duration-300 group",
+                  (log.callType === 'guest' && !log.remarks)
+                    ? "border-red-500/50 bg-red-50/20 shadow-[inset_4px_0_0_0_#ef4444]" 
+                    : "border-border/30 hover:bg-muted/50"
+                )}
               >
                 <td className="p-4">
                   <EditableCell 
@@ -48,16 +55,33 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                     onSave={(val) => onUpdate(log.id, 'requestedBy', val)} 
                   />
                 </td>
-                <td className="p-4">
-                  <EditableCell 
-                    value={log.lastName} 
-                    onSave={(val) => onUpdate(log.id, 'lastName', val)} 
-                  />
+                <td className="p-4 text-center">
+                  <span className={cn(
+                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter",
+                    log.callType === 'res_in' ? "bg-purple-100 text-purple-600" :
+                    log.callType === 'res_out' ? "bg-pink-100 text-pink-600" :
+                    log.callType === 'booking_confirmation' ? "bg-amber-100 text-amber-600" :
+                    (log.callType === 'inq_in' || log.callType === 'inq_out') ? "bg-blue-100 text-blue-600" :
+                    "bg-slate-100 text-slate-600"
+                  )}>
+                    {log.callType === 'res_in' ? 'Transfer (In)' :
+                     log.callType === 'res_out' ? 'Transfer (Out)' :
+                     log.callType === 'inq_in' ? 'Inq (In)' :
+                     log.callType === 'inq_out' ? 'Inq (Out)' :
+                     log.callType === 'booking_confirmation' ? 'Booking' :
+                     log.callType || 'guest'}
+                  </span>
                 </td>
                 <td className="p-4">
                   <EditableCell 
                     value={log.roomNo} 
                     onSave={(val) => onUpdate(log.id, 'roomNo', val)} 
+                  />
+                </td>
+                <td className="p-4">
+                  <EditableCell 
+                    value={log.lastName} 
+                    onSave={(val) => onUpdate(log.id, 'lastName', val)} 
                   />
                 </td>
                 <td className="p-4">
@@ -129,7 +153,8 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                 <td className="p-4 text-right flex items-center justify-end gap-1">
                   <button
                     onClick={() => {
-                      const text = `hi ${log.roomNo} ${log.lastName} ${log.guestReq}`;
+                      const prefix = (log.callType === 'res_out' || log.callType === 'inq_out') ? 'out' : 'hi';
+                      const text = `${prefix} ${log.roomNo} ${log.lastName} ${log.guestReq}`;
                       navigator.clipboard.writeText(text);
                       toast.success("Entry Copied", {
                         description: `Viber format for RM ${log.roomNo} copied.`
@@ -139,6 +164,21 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                     title="Copy for Viber"
                   >
                     <MessageCircle size={18} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const timestamp = formatFullTimestamp(new Date(log.createdAt));
+                      const prefix = (log.callType === 'res_out' || log.callType === 'inq_out') ? 'out' : 'hi';
+                      const text = `${timestamp} ${prefix} ${log.roomNo} ${log.lastName} ${log.guestReq}`;
+                      navigator.clipboard.writeText(text);
+                      toast.success("Notepad Format Copied", {
+                        description: `Timestamped format for RM ${log.roomNo} copied.`
+                      });
+                    }}
+                    className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                    title="Copy for Notepad"
+                  >
+                    <FileText size={18} />
                   </button>
                   <button
                     onClick={() => onDelete(log.id)}
