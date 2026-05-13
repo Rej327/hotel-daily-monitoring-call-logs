@@ -17,6 +17,7 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { RequestCounter } from "@/components/RequestCounter";
 import { LogoutConfirmModal } from "@/components/LogoutConfirmModal";
 import { TermsModal } from "@/components/TermsModal";
+import { SecurityGuard } from "@/components/SecurityGuard";
 import { CallLog } from "@/types";
 
 import {
@@ -43,6 +44,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Toaster, toast } from "sonner";
+import { PrivacyModal } from "@/components/PrivacyModal";
 
 const subscribe = () => () => {};
 const getSnapshot = () => true;
@@ -55,9 +57,9 @@ export default function Home() {
     getServerSnapshot,
   );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<"monitoring" | "dashboard" | "counter">(
-    "monitoring",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "monitoring" | "dashboard" | "counter"
+  >("monitoring");
 
   const [logs, setLogs] = useState<CallLog[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,7 +71,8 @@ export default function Home() {
   const [notepadCopySuccess, setNotepadCopySuccess] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "pending">("all");
   const [showTerms, setShowTerms] = useState(false);
-
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   // Initial Load
   useEffect(() => {
@@ -116,14 +119,17 @@ export default function Home() {
 
   const guestRequestCountsByType = useMemo(() => {
     const counts: Record<string, Record<string, number>> = {};
-    
+
     // Group logs by type
-    const logsByType = filteredLogs.reduce((acc, log) => {
-      const type = log.callType || "guest";
-      if (!acc[type]) acc[type] = [];
-      acc[type].push(log);
-      return acc;
-    }, {} as Record<string, CallLog[]>);
+    const logsByType = filteredLogs.reduce(
+      (acc, log) => {
+        const type = log.callType || "guest";
+        if (!acc[type]) acc[type] = [];
+        acc[type].push(log);
+        return acc;
+      },
+      {} as Record<string, CallLog[]>,
+    );
 
     // Parse counts for each type
     Object.entries(logsByType).forEach(([type, typeLogs]) => {
@@ -133,28 +139,30 @@ export default function Home() {
     return counts;
   }, [filteredLogs]);
 
-
   const stats = useMemo(() => {
     const uniqueRooms = new Set(logs.map((l) => l.roomNo)).size;
     const undeliveredCount = logs.filter(
       (l) => l.callType === "guest" && !l.remarks,
     ).length;
 
-    const typeCounts = logs.reduce((acc, log) => {
-      const type = log.callType || "guest";
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const typeCounts = logs.reduce(
+      (acc, log) => {
+        const type = log.callType || "guest";
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return {
       totalLogs: logs.length,
       uniqueRooms,
       undeliveredCount,
-      avgRequests: uniqueRooms > 0 ? (logs.length / uniqueRooms).toFixed(1) : "0",
-      typeCounts
+      avgRequests:
+        uniqueRooms > 0 ? (logs.length / uniqueRooms).toFixed(1) : "0",
+      typeCounts,
     };
   }, [logs]);
-
 
   const handleLogin = useCallback(() => {
     setIsAuthenticated(true);
@@ -164,7 +172,6 @@ export default function Home() {
       description: "Successfully authenticated to Telex Monitoring.",
     });
   }, []);
-
 
   const handleAdd = useCallback(
     (
@@ -294,7 +301,9 @@ export default function Home() {
   }, [logs]);
 
   const copyForViber = useCallback(() => {
-    const guestLogs = logs.filter(log => log.callType === 'guest' || !log.callType);
+    const guestLogs = logs.filter(
+      (log) => log.callType === "guest" || !log.callType,
+    );
     const text = guestLogs
       .map((log) => {
         return `hi ${log.roomNo} ${log.lastName} ${log.guestReq}`;
@@ -309,7 +318,6 @@ export default function Home() {
       setTimeout(() => setViberCopySuccess(false), 2000);
     });
   }, [logs]);
-
 
   const copyAllForNotepad = useCallback(() => {
     if (logs.length === 0) {
@@ -348,7 +356,7 @@ export default function Home() {
       res_out: "TRANSFER OUT",
       inq_in: "INQ IN",
       inq_out: "INQ OUT",
-      booking_confirmation: "BOOKING CONF"
+      booking_confirmation: "BOOKING CONF",
     };
 
     const text = Object.entries(guestRequestCountsByType)
@@ -365,12 +373,13 @@ export default function Home() {
     navigator.clipboard.writeText(text).then(() => {
       setCountsCopySuccess(true);
       toast.success("Totals Copied", {
-        description: text ? "All type totals copied to clipboard." : "No items to copy.",
+        description: text
+          ? "All type totals copied to clipboard."
+          : "No items to copy.",
       });
       setTimeout(() => setCountsCopySuccess(false), 2000);
     });
   }, [guestRequestCountsByType]);
-
 
   const handleLogout = useCallback(() => {
     setIsAuthenticated(false);
@@ -393,147 +402,172 @@ export default function Home() {
   }
 
   return (
-    <NavShell
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      onLogout={() => setIsLogoutModalOpen(true)}
-      onReset={() => setIsModalOpen(true)}
+    <>
+    <SecurityGuard
+
+      isPrivacyMode={isPrivacyMode}
+      onDisablePrivacy={() => setIsPrivacyMode(false)}
     >
-      <div className="p-4 md:p-8 w-auto mx-auto space-y-8 animate-in fade-in duration-500">
-        <Toaster position="top-right" richColors />
+      <NavShell
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLogout={() => setIsLogoutModalOpen(true)}
+        onReset={() => setIsModalOpen(true)}
+        isPrivacyMode={isPrivacyMode}
+        setIsPrivacyMode={(val) => {
+          if (!val && isPrivacyMode) {
+            setShowPrivacyModal(true);
+          } else {
+            setIsPrivacyMode(val);
+          }
+        }}
+      >
+        <div className="p-4 md:p-8 w-auto mx-auto space-y-8 animate-in fade-in duration-500">
+          <Toaster position="top-right" richColors />
 
-        {activeTab === "dashboard" && (
-          <div className="space-y-8">
+          {activeTab === "dashboard" && (
+            <div className="space-y-8">
+              <header>
+                <h1 className="text-3xl font-black text-slate-800">
+                  Operational Overview
+                </h1>
+                <p className="text-muted-foreground font-medium">
+                  Daily performance metrics and request analytics.
+                </p>
+              </header>
 
-            <header>
-              <h1 className="text-3xl font-black text-slate-800">
-                Operational Overview
-              </h1>
-              <p className="text-muted-foreground font-medium">
-                Daily performance metrics and request analytics.
-              </p>
-            </header>
+              <DashboardStats stats={stats} />
 
-            <DashboardStats stats={stats} />
-
-            <section>
-              <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
-                <BarChart3 size={16} strokeWidth={3} />
-                Item Distribution by Type
-              </div>
-              <div className="p-6 rounded-2xl glass border border-border/50 luxury-shadow space-y-6">
-                {Object.entries(guestRequestCountsByType).some(([_, c]) => Object.keys(c).length > 0) ? (
-                  Object.entries(guestRequestCountsByType).map(([type, counts]) => {
-                    if (Object.keys(counts).length === 0) return null;
-                    return (
-                      <div key={type} className="space-y-3">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                          {type === 'guest' ? 'Guest Requests' : 
-                           type === 'res_in' ? 'Transfers (In)' :
-                           type === 'res_out' ? 'Transfers (Out)' :
-                           type === 'inq_in' ? 'Inquiries (In)' :
-                           type === 'inq_out' ? 'Inquiries (Out)' :
-                           'Booking Confirmations'}
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                          {Object.entries(counts).map(([item, count]) => (
-                            <div
-                              key={item}
-                              className="flex flex-col items-center justify-center min-w-[80px] p-3 rounded-xl bg-white border border-border shadow-sm transition-all hover:scale-105"
-                            >
-                              <span className="text-2xl font-black text-primary">
-                                {count}
-                              </span>
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                {item}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">
-                    No data to visualize yet.
-                  </p>
-                )}
-              </div>
-            </section>
-          </div>
-        )}
-
-
-        {activeTab === "counter" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <RequestCounter
-              countsByType={guestRequestCountsByType}
-              onCopyTotals={copyCounts}
-              copyState={countsCopySuccess}
-            />
-          </div>
-        )}
-
-        {activeTab === "monitoring" && (
-          <div className="space-y-8">
-
-            {/* Entry Section */}
-            <section>
-              <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
-                <Plus size={16} strokeWidth={3} />
-                Quick Add Log
-              </div>
-              <AddEntry onAdd={handleAdd} />
-            </section>
-
-
-
-
-            {/* Table Section */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-xl font-black text-slate-800">
-                    Active Logs
-                  </h2>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFilterType("all")}
-                      className={cn(
-                        "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider transition-all",
-                        filterType === "all"
-                          ? "bg-primary text-white shadow-sm"
-                          : "bg-primary/5 text-primary hover:bg-primary/10",
-                      )}
-                    >
-                      All ({logs.length})
-                    </button>
-                    <button
-                      onClick={() => setFilterType("pending")}
-                      className={cn(
-                        "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider transition-all",
-                        filterType === "pending"
-                          ? "bg-red-500 text-white shadow-sm"
-                          : "bg-red-50 text-red-500 hover:bg-red-100",
-                      )}
-                    >
-                      Undelivered ({stats.undeliveredCount})
-                    </button>
-                  </div>
+              <section>
+                <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
+                  <BarChart3 size={16} strokeWidth={3} />
+                  Item Distribution by Type
                 </div>
+                <div className="p-6 rounded-2xl glass border border-border/50 luxury-shadow space-y-6">
+                  {Object.entries(guestRequestCountsByType).some(
+                    ([_, c]) => Object.keys(c).length > 0,
+                  ) ? (
+                    Object.entries(guestRequestCountsByType).map(
+                      ([type, counts]) => {
+                        if (Object.keys(counts).length === 0) return null;
+                        return (
+                          <div key={type} className="space-y-3">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                              {type === "guest"
+                                ? "Guest Requests"
+                                : type === "res_in"
+                                  ? "Transfers (In)"
+                                  : type === "res_out"
+                                    ? "Transfers (Out)"
+                                    : type === "inq_in"
+                                      ? "Inquiries (In)"
+                                      : type === "inq_out"
+                                        ? "Inquiries (Out)"
+                                        : "Booking Confirmations"}
+                            </p>
+                            <div className="flex flex-wrap gap-4">
+                              {Object.entries(counts).map(([item, count]) => (
+                                <div
+                                  key={item}
+                                  className="flex flex-col items-center justify-center min-w-[80px] p-3 rounded-xl bg-white border border-border shadow-sm transition-all hover:scale-105"
+                                >
+                                  <span className="text-2xl font-black text-primary">
+                                    {count}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                    {item}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      },
+                    )
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      No data to visualize yet.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeTab === "counter" && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <RequestCounter
+                countsByType={guestRequestCountsByType}
+                onCopyTotals={copyCounts}
+                copyState={countsCopySuccess}
+              />
+            </div>
+          )}
+
+          {activeTab === "monitoring" && (
+            <div className="space-y-8">
+              {/* Entry Section */}
+              <section>
+                <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
+                  <Plus size={16} strokeWidth={3} />
+                  Quick Add Log
+                </div>
+                <AddEntry onAdd={handleAdd} />
+              </section>
+
+              {/* Table Section */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-black text-slate-800">
+                      Active Logs
+                    </h2>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setFilterType("all")}
+                        className={cn(
+                          "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider transition-all",
+                          filterType === "all"
+                            ? "bg-primary text-white shadow-sm"
+                            : "bg-primary/5 text-primary hover:bg-primary/10",
+                        )}
+                      >
+                        All ({logs.length})
+                      </button>
+                      <button
+                        onClick={() => setFilterType("pending")}
+                        className={cn(
+                          "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider transition-all",
+                          filterType === "pending"
+                            ? "bg-red-500 text-white shadow-sm"
+                            : "bg-red-50 text-red-500 hover:bg-red-100",
+                        )}
+                      >
+                        Undelivered ({stats.undeliveredCount})
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={copyAllForNotepad}
                       className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200 font-bold text-xs"
                     >
-                      {notepadCopySuccess ? <Check size={14} /> : <FileText size={14} />}
+                      {notepadCopySuccess ? (
+                        <Check size={14} />
+                      ) : (
+                        <FileText size={14} />
+                      )}
                       {notepadCopySuccess ? "Notepad Copied!" : "Copy Notepad"}
                     </button>
                     <button
                       onClick={copyForViber}
                       className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 font-bold text-xs"
                     >
-                      {viberCopySuccess ? <Check size={14} /> : <MessageCircle size={14} />}
+                      {viberCopySuccess ? (
+                        <Check size={14} />
+                      ) : (
+                        <MessageCircle size={14} />
+                      )}
                       {viberCopySuccess ? "Viber Copied!" : "Copy Viber"}
                     </button>
                     <button
@@ -551,55 +585,60 @@ export default function Home() {
                       Export Excel
                     </button>
                   </div>
+                </div>
+                <MonitoringTable
+                  data={filteredLogs}
+                  onUpdate={handleUpdate}
+                  onDelete={(id) => setDeleteId(id)}
+                  isPrivacyMode={isPrivacyMode}
+                />
+              </section>
+            </div>
+          )}
 
-              </div>
-              <MonitoringTable
-                data={filteredLogs}
-                onUpdate={handleUpdate}
-                onDelete={(id) => setDeleteId(id)}
-              />
-            </section>
-          </div>
-        )}
+          {/* Footer */}
+          <footer className="pt-12 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]">
+            © 2026 Telex Management Systems • Efficiency & Hospitality
+          </footer>
+        </div>
+      </NavShell>
+    </SecurityGuard>
 
 
-        {/* Modals */}
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={handleConfirmClear}
-          title="Reset All Monitoring Data?"
-          message="This will permanently delete all call logs for today. This action cannot be undone."
-          confirmText="Yes, Reset Everything"
-          requirePassword={true}
-        />
+    <Modal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onConfirm={handleConfirmClear}
+      title="Reset All Monitoring Data?"
+      message="This will permanently delete all call logs for today. This action cannot be undone."
+      confirmText="Yes, Reset Everything"
+      requirePassword={true}
+    />
 
-        <Modal
-          isOpen={!!deleteId}
-          onClose={() => setDeleteId(null)}
-          onConfirm={handleConfirmDelete}
-          title="Delete This Entry?"
-          message="Are you sure you want to remove this specific call log?"
-          confirmText="Delete"
-          requirePassword={true}
-        />
+    <Modal
+      isOpen={!!deleteId}
+      onClose={() => setDeleteId(null)}
+      onConfirm={handleConfirmDelete}
+      title="Delete This Entry?"
+      message="Are you sure you want to remove this specific call log?"
+      confirmText="Delete"
+      requirePassword={true}
+    />
 
-        {/* Footer */}
-        <footer className="pt-12 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]">
-          © 2026 Telex Management Systems • Efficiency & Hospitality
-        </footer>
-        <LogoutConfirmModal
-          isOpen={isLogoutModalOpen}
-          onClose={() => setIsLogoutModalOpen(false)}
-          onLogout={handleLogout}
-        />
+    <LogoutConfirmModal
+      isOpen={isLogoutModalOpen}
+      onClose={() => setIsLogoutModalOpen(false)}
+      onLogout={handleLogout}
+    />
 
-        <TermsModal 
-          isOpen={showTerms}
-          onAccept={() => setShowTerms(false)}
-        />
-      </div>
-
-    </NavShell>
+    <TermsModal isOpen={showTerms} onAccept={() => setShowTerms(false)} />
+    
+    <PrivacyModal
+      isOpen={showPrivacyModal}
+      onClose={() => setShowPrivacyModal(false)}
+      onConfirm={() => setIsPrivacyMode(false)}
+    />
+    </>
   );
 }
+

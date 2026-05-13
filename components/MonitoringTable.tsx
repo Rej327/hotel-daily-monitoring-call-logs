@@ -12,10 +12,19 @@ interface MonitoringTableProps {
   data: CallLog[];
   onUpdate: (id: string, field: keyof CallLog, value: string | number) => void;
   onDelete: (id: string) => void;
+  isPrivacyMode?: boolean;
 }
 
-const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpdate, onDelete }) => {
+const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ 
+  data, 
+  onUpdate, 
+  onDelete,
+  isPrivacyMode = false
+}) => {
+  const privacyBlur = isPrivacyMode ? "blur-md select-none hover:blur-none transition-all duration-300" : "";
+
   return (
+
     <div className="w-full overflow-x-auto rounded-xl luxury-shadow glass border border-border/50">
       <table className="w-full text-left border-collapse min-w-[1100px]">
         <thead>
@@ -49,12 +58,13 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                     : "border-border/30 hover:bg-muted/50"
                 )}
               >
-                <td className="p-4">
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.requestedBy} 
                     onSave={(val) => onUpdate(log.id, 'requestedBy', val)} 
                   />
                 </td>
+
                 <td className="p-4 text-center">
                   <EditableCell 
                     value={log.callType || "guest"} 
@@ -79,25 +89,28 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                   />
                 </td>
 
-                <td className="p-4">
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.roomNo} 
                     onSave={(val) => onUpdate(log.id, 'roomNo', val)} 
                   />
                 </td>
-                <td className="p-4">
+
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.lastName} 
                     onSave={(val) => onUpdate(log.id, 'lastName', val)} 
                   />
                 </td>
-                <td className="p-4">
+
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.guestReq} 
                     onSave={(val) => onUpdate(log.id, 'guestReq', val)} 
                     className="font-bold text-primary"
                   />
                 </td>
+
                 <td className="p-4 font-mono text-xs">
                   <EditableCell 
                     value={log.timeOfRequest} 
