@@ -12,6 +12,7 @@ import {
   Lock,
   Users,
   ChevronDown,
+  PhoneCall,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -39,7 +40,6 @@ export const NavShell: React.FC<NavShellProps> = ({
   currentUser,
   setCurrentUser,
 }) => {
-
   return (
     <div className="flex min-h-screen bg-slate-50/50">
       {/* Sidebar */}
@@ -76,7 +76,9 @@ export const NavShell: React.FC<NavShellProps> = ({
               </div>
               <select
                 value={currentUser}
-                onChange={(e) => setCurrentUser(e.target.value as "cly" | "ann")}
+                onChange={(e) =>
+                  setCurrentUser(e.target.value as "cly" | "ann")
+                }
                 className="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 outline-none focus:ring-2 focus:ring-primary/10 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner"
               >
                 <option value="cly">CLY</option>
@@ -88,8 +90,6 @@ export const NavShell: React.FC<NavShellProps> = ({
             </div>
           </div>
         </div>
-
-
 
         <nav className="flex-1 p-4 space-y-2">
           <button
@@ -113,8 +113,8 @@ export const NavShell: React.FC<NavShellProps> = ({
                 : "text-slate-500 hover:bg-slate-50",
             )}
           >
-            <Activity size={20} />
-            Monitoring
+            <PhoneCall size={20} />
+            Call Management
           </button>
           <button
             onClick={() => setActiveTab("counter")}

@@ -42,7 +42,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose, onC
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/20"
+            className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-white/20 flex flex-col max-h-[90vh] overflow-y-auto custom-scrollbar"
           >
             <div className="p-6 pb-0 flex justify-between items-start">
               <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
