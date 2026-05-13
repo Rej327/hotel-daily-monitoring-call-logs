@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShieldAlert,
+  ShieldCheck,
   Check,
   AlertTriangle,
   Database,
   Info,
   Eye,
   Lock,
+  Hotel,
 } from "lucide-react";
 
 interface TermsModalProps {
@@ -34,141 +35,183 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onAccept }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-xl">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200"
+            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+            className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden border border-slate-100"
           >
-            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-amber-100 text-amber-600">
-                <ShieldAlert size={28} />
+            {/* Header */}
+            <div className="p-10 border-b border-slate-50 bg-gradient-to-br from-slate-50 to-white flex items-center gap-6">
+              <div className="p-4 rounded-[1.5rem] bg-primary shadow-2xl shadow-primary/30 text-white">
+                <Hotel size={32} strokeWidth={2.5} />
               </div>
               <div>
-                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">
-                  Usage Agreement
+                <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">
+                  System Notice
                 </h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Legal Notice & Disclosure
+                <p className="text-[12px] font-black text-primary uppercase tracking-[0.2em]">
+                  Operational Usage Agreement
                 </p>
               </div>
             </div>
 
-            <div className="p-8 space-y-6">
+            {/* Content */}
+            <div className="p-10 space-y-8">
               <div className="space-y-4">
-                {/* Detail 1 */}
+                {/* Free Usage */}
                 <div className="relative group">
-                  <div className={`flex gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 transition-all ${!revealed.free ? 'blur-md grayscale' : 'hover:bg-white hover:shadow-md'}`}>
+                  <div
+                    className={cn(
+                      "flex gap-5 p-6 rounded-[2rem] border transition-all duration-500",
+                      !revealed.free
+                        ? "bg-slate-50 border-slate-100 blur-sm grayscale opacity-50"
+                        : "bg-blue-50/30 border-blue-100 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5",
+                    )}
+                  >
                     <div className="text-blue-500 shrink-0 mt-1">
-                      <Info size={20} />
+                      <Info size={24} strokeWidth={2.5} />
                     </div>
-                    <div>
-                      <p className="text-sm font-black text-slate-700">Open Source & Free</p>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        This application is provided free of charge for operational efficiency purposes. No fees are required for usage.
+                    <div className="space-y-1">
+                      <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                        Open System Protocol
+                      </p>
+                      <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
+                        This interface is provided as a zero-cost utility for
+                        hotel operations. No licensing fees apply for active
+                        sessions.
                       </p>
                     </div>
                   </div>
                   {!revealed.free && (
-                    <button 
-                      onClick={() => toggleReveal('free')}
-                      className="absolute inset-0 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 rounded-2xl transition-all group"
+                    <button
+                      onClick={() => toggleReveal("free")}
+                      className="absolute inset-0 flex items-center justify-center rounded-[2rem] transition-all group"
                     >
-                      <div className="bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-900 group-hover:scale-110 transition-transform">
-                        <Eye size={12} /> View Details
+                      <div className="bg-slate-900 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white group-hover:scale-105 transition-transform">
+                        <Lock size={12} className="text-primary" /> Unlock Entry
                       </div>
                     </button>
                   )}
                 </div>
 
-                {/* Detail 2 */}
+                {/* Liability */}
                 <div className="relative group">
-                  <div className={`flex gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 transition-all ${!revealed.liability ? 'blur-md grayscale' : 'hover:bg-white hover:shadow-md'}`}>
+                  <div
+                    className={cn(
+                      "flex gap-5 p-6 rounded-[2rem] border transition-all duration-500",
+                      !revealed.liability
+                        ? "bg-slate-50 border-slate-100 blur-sm grayscale opacity-50"
+                        : "bg-red-50/30 border-red-100 hover:bg-white hover:shadow-xl hover:shadow-red-500/5",
+                    )}
+                  >
                     <div className="text-red-500 shrink-0 mt-1">
-                      <AlertTriangle size={20} />
+                      <AlertTriangle size={24} strokeWidth={2.5} />
                     </div>
-                    <div>
-                      <p className="text-sm font-black text-slate-700">Liability Disclaimer</p>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        The developer is not responsible for any data loss, errors, or issues arising from the use of this tool. Use at your own risk.
+                    <div className="space-y-1">
+                      <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                        Risk Mitigation
+                      </p>
+                      <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
+                        The developer holds no liability for data interruptions
+                        or operational delays. System maintenance is handled
+                        locally.
                       </p>
                     </div>
                   </div>
                   {!revealed.liability && (
-                    <button 
-                      onClick={() => toggleReveal('liability')}
-                      className="absolute inset-0 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 rounded-2xl transition-all group"
+                    <button
+                      onClick={() => toggleReveal("liability")}
+                      className="absolute inset-0 flex items-center justify-center rounded-[2rem] transition-all group"
                     >
-                      <div className="bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-900 group-hover:scale-110 transition-transform">
-                        <Eye size={12} /> View Details
+                      <div className="bg-slate-900 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white group-hover:scale-105 transition-transform">
+                        <Lock size={12} className="text-primary" /> Unlock Entry
                       </div>
                     </button>
                   )}
                 </div>
 
-                {/* Detail 3 */}
+                {/* Privacy */}
                 <div className="relative group">
-                  <div className={`flex gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 transition-all ${!revealed.privacy ? 'blur-md grayscale' : 'hover:bg-white hover:shadow-md'}`}>
+                  <div
+                    className={cn(
+                      "flex gap-5 p-6 rounded-[2rem] border transition-all duration-500",
+                      !revealed.privacy
+                        ? "bg-slate-50 border-slate-100 blur-sm grayscale opacity-50"
+                        : "bg-emerald-50/30 border-emerald-100 hover:bg-white hover:shadow-xl hover:shadow-emerald-500/5",
+                    )}
+                  >
                     <div className="text-emerald-500 shrink-0 mt-1">
-                      <Database size={20} />
+                      <Database size={24} strokeWidth={2.5} />
                     </div>
-                    <div>
-                      <p className="text-sm font-black text-slate-700">Data Privacy & Storage</p>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        This app has **NO DATABASE**. All information is stored locally in your browser memory. Data is only on YOUR computer.
+                    <div className="space-y-1">
+                      <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                        Local Data Isolation
+                      </p>
+                      <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
+                        Privacy First Architecture: This system operates with
+                        **NO CLOUD DATABASE**. All records reside exclusively in
+                        your browser cache.
                       </p>
                     </div>
                   </div>
                   {!revealed.privacy && (
-                    <button 
-                      onClick={() => toggleReveal('privacy')}
-                      className="absolute inset-0 flex items-center justify-center bg-slate-900/5 hover:bg-slate-900/10 rounded-2xl transition-all group"
+                    <button
+                      onClick={() => toggleReveal("privacy")}
+                      className="absolute inset-0 flex items-center justify-center rounded-[2rem] transition-all group"
                     >
-                      <div className="bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-900 group-hover:scale-110 transition-transform">
-                        <Eye size={12} /> View Details
+                      <div className="bg-slate-900 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white group-hover:scale-105 transition-transform">
+                        <Lock size={12} className="text-primary" /> Unlock Entry
                       </div>
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100">
-                <label className={cn(
-                  "flex items-center gap-3 cursor-pointer group transition-opacity",
-                  !allRevealed ? "opacity-30 cursor-not-allowed" : "opacity-100"
-                )}>
+              {/* Acceptance */}
+              <div className="pt-8 border-t border-slate-50">
+                <label
+                  className={cn(
+                    "flex items-center gap-4 cursor-pointer group transition-all p-4 rounded-2xl",
+                    !allRevealed
+                      ? "opacity-30 cursor-not-allowed"
+                      : "hover:bg-slate-50",
+                  )}
+                >
                   <div className="relative flex items-center justify-center">
                     <input
                       type="checkbox"
                       disabled={!allRevealed}
                       checked={hasRead}
                       onChange={(e) => setHasRead(e.target.checked)}
-                      className="peer h-6 w-6 cursor-pointer appearance-none rounded-lg border-2 border-slate-200 transition-all checked:border-primary checked:bg-primary disabled:bg-slate-100"
+                      className="peer h-7 w-7 cursor-pointer appearance-none rounded-xl border-2 border-slate-200 transition-all checked:border-primary checked:bg-primary disabled:bg-slate-100"
                     />
                     <Check
-                      size={14}
-                      className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"
+                      size={16}
+                      className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-[3]"
                     />
                   </div>
-                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors">
-                    I have read and understand the terms and conditions
+                  <span className="text-[12px] font-black text-slate-600 uppercase tracking-widest group-hover:text-primary transition-colors">
+                    I acknowledge and accept the system protocols
                   </span>
                 </label>
               </div>
             </div>
 
-            <div className="p-8 pt-0 flex gap-3">
+            {/* Footer Button */}
+            <div className="p-10 pt-0">
               <button
                 onClick={onAccept}
                 disabled={!hasRead || !allRevealed}
-                className={`w-full py-5 rounded-2xl font-black transition-all shadow-xl uppercase tracking-widest ${
+                className={cn(
+                  "w-full py-6 rounded-[2rem] font-black transition-all shadow-2xl uppercase tracking-[0.3em] text-xs",
                   hasRead && allRevealed
-                    ? "bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200"
-                    : "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
-                }`}
+                    ? "bg-slate-900 text-white hover:bg-primary hover:shadow-primary/30"
+                    : "bg-slate-100 text-slate-300 cursor-not-allowed",
+                )}
               >
-                {!allRevealed ? "Please View All Details First" : "Accept & Proceed"}
+                {!allRevealed ? "Complete System Check" : "Authorize Session"}
               </button>
             </div>
           </motion.div>
@@ -179,5 +222,5 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onAccept }) => {
 };
 
 function cn(...classes: (string | undefined | false | null)[]) {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }

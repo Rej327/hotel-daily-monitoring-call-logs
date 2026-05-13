@@ -399,10 +399,15 @@ export default function Home() {
   }, []);
 
   if (!isClient) return null;
-  if (!isAuthenticated) return <SecurityPortal onLogin={handleLogin} />;
 
   return (
     <>
+      <Toaster position="top-right" richColors />
+      {!isAuthenticated ? (
+        <SecurityPortal onLogin={handleLogin} />
+      ) : (
+
+
       <SecurityGuard
         isPrivacyMode={isPrivacyMode}
         onDisablePrivacy={() => togglePrivacyMode(false)}
@@ -425,7 +430,8 @@ export default function Home() {
         >
 
           <div className="p-4 md:p-8 w-auto mx-auto space-y-8 animate-in fade-in duration-500">
-            <Toaster position="top-right" richColors />
+
+
 
             {activeTab === "dashboard" && (
               <div className="space-y-8">
@@ -584,6 +590,8 @@ export default function Home() {
           </div>
         </NavShell>
       </SecurityGuard>
+      )}
+
 
       <Modal
         isOpen={isModalOpen}
