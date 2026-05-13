@@ -13,14 +13,19 @@ interface MonitoringTableProps {
   onUpdate: (id: string, field: keyof CallLog, value: string | number) => void;
   onDelete: (id: string) => void;
   isPrivacyMode?: boolean;
+  currentUser: "cly" | "ann";
 }
 
+
 const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ 
-  data, 
+  data,
   onUpdate, 
   onDelete,
-  isPrivacyMode = false
+  isPrivacyMode = false,
+  currentUser
 }) => {
+
+
   const privacyBlur = isPrivacyMode ? "blur-md select-none hover:blur-none transition-all duration-300" : "";
 
   return (
@@ -174,12 +179,14 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({
                   <button
                     onClick={() => {
                       const prefix = (log.callType === 'res_out' || log.callType === 'inq_out') ? 'out' : 'hi';
-                      const text = `${prefix} ${log.roomNo} ${log.lastName} ${log.guestReq}`;
+                      const text = `${prefix} ${log.roomNo} ${log.lastName} ${log.guestReq} // ${currentUser.toUpperCase()}`;
+
                       navigator.clipboard.writeText(text);
                       toast.success("Entry Copied", {
                         description: `Viber format for RM ${log.roomNo} copied.`
                       });
                     }}
+
                     className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                     title="Copy for Viber"
                   >

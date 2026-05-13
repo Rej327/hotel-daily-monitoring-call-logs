@@ -10,7 +10,10 @@ import {
   BarChart3,
   EyeOff,
   Lock,
+  Users,
+  ChevronDown,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 interface NavShellProps {
@@ -21,6 +24,8 @@ interface NavShellProps {
   onReset: () => void;
   isPrivacyMode: boolean;
   setIsPrivacyMode: (val: boolean) => void;
+  currentUser: "cly" | "ann";
+  setCurrentUser: (user: "cly" | "ann") => void;
 }
 
 export const NavShell: React.FC<NavShellProps> = ({
@@ -31,7 +36,10 @@ export const NavShell: React.FC<NavShellProps> = ({
   onReset,
   isPrivacyMode,
   setIsPrivacyMode,
+  currentUser,
+  setCurrentUser,
 }) => {
+
   return (
     <div className="flex min-h-screen bg-slate-50/50">
       {/* Sidebar */}
@@ -43,7 +51,7 @@ export const NavShell: React.FC<NavShellProps> = ({
             : "ml-0 opacity-100",
         )}
       >
-        <div className="p-6 border-b border-slate-100">
+        <div className="p-6 border-b border-slate-100 space-y-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-primary shadow-lg shadow-primary/20">
               <Hotel className="text-white" size={20} />
@@ -57,7 +65,31 @@ export const NavShell: React.FC<NavShellProps> = ({
               </p>
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">
+              On Duty
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-primary">
+                <Users size={14} />
+              </div>
+              <select
+                value={currentUser}
+                onChange={(e) => setCurrentUser(e.target.value as "cly" | "ann")}
+                className="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 outline-none focus:ring-2 focus:ring-primary/10 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner"
+              >
+                <option value="cly">CLY</option>
+                <option value="ann">ANN</option>
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown size={12} />
+              </div>
+            </div>
+          </div>
         </div>
+
+
 
         <nav className="flex-1 p-4 space-y-2">
           <button
