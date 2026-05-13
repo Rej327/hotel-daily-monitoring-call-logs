@@ -121,19 +121,6 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
 
   return (
     <div className="w-full space-y-4">
-      <div className="relative">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder='Type log details (e.g. "hi 9912 dela.cruz 5bt") and press Enter...'
-          className="w-full h-24 p-4 rounded-xl glass border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all luxury-shadow resize-none text-sm"
-        />
-        <div className="absolute bottom-3 right-3 flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-semibold pointer-events-none">
-          <Keyboard size={14} />
-          <span>Press Enter to append</span>
-        </div>
-      </div>
       <div className="flex flex-wrap gap-2 mb-2">
         {(
           [
@@ -169,10 +156,23 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
           </button>
         ))}
       </div>
+      <div className="relative mt-4">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder='Type log details (e.g. "hi 9912 jonh.doe 5bt" or "hi 9912 jonh.doe 5.bt,.2.dk") and press Enter...'
+          className="w-full h-24 p-4 rounded-xl glass border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all luxury-shadow resize-none text-sm"
+        />
+        <div className="absolute bottom-3 right-3 flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest font-semibold pointer-events-none">
+          <Keyboard size={14} />
+          <span>Press Enter to append</span>
+        </div>
+      </div>
 
-      <div className="text-[10px] text-muted-foreground italic px-1">
-        Format: [Tag] [Room] [Name] [Request] (Tip: use dots for names like
-        dela.cruz)
+      <div className="text-[12px] text-muted-foreground italic px-1">
+        Format: [Tag] [Room] [Name] [Request] (Tip: use dots for space like
+        john.doe, in.room.dining)
       </div>
     </div>
   );
