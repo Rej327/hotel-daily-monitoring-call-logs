@@ -16,7 +16,9 @@ import { NavShell } from "@/components/NavShell";
 import { DashboardStats } from "@/components/DashboardStats";
 import { RequestCounter } from "@/components/RequestCounter";
 import { LogoutConfirmModal } from "@/components/LogoutConfirmModal";
+import { TermsModal } from "@/components/TermsModal";
 import { CallLog } from "@/types";
+
 import {
   formatTimeHHMMH,
   parseGuestRequests,
@@ -53,9 +55,10 @@ export default function Home() {
     getServerSnapshot,
   );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<"monitoring" | "dashboard">(
+  const [activeTab, setActiveTab] = useState<"monitoring" | "dashboard" | "counter">(
     "monitoring",
   );
+
   const [logs, setLogs] = useState<CallLog[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -65,11 +68,16 @@ export default function Home() {
   const [countsCopySuccess, setCountsCopySuccess] = useState(false);
   const [notepadCopySuccess, setNotepadCopySuccess] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "pending">("all");
+  const [showTerms, setShowTerms] = useState(false);
+
 
   // Initial Load
   useEffect(() => {
     if (!isClient) return;
-    const saved = localStorage.getItem("call-logs") || localStorage.getItem("telex-logs") || localStorage.getItem("monitoring-logs");
+    const saved =
+      localStorage.getItem("call-logs") ||
+      localStorage.getItem("telex-logs") ||
+      localStorage.getItem("monitoring-logs");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -101,35 +109,62 @@ export default function Home() {
 
   const filteredLogs = useMemo(() => {
     if (filterType === "pending") {
-      return logs.filter((log) => log.callType === 'guest' && !log.remarks);
+      return logs.filter((log) => log.callType === "guest" && !log.remarks);
     }
     return logs;
   }, [logs, filterType]);
 
-  const guestRequestCounts = useMemo(
-    () => parseGuestRequests(filteredLogs),
-    [filteredLogs],
-  );
+  const guestRequestCountsByType = useMemo(() => {
+    const counts: Record<string, Record<string, number>> = {};
+    
+    // Group logs by type
+    const logsByType = filteredLogs.reduce((acc, log) => {
+      const type = log.callType || "guest";
+      if (!acc[type]) acc[type] = [];
+      acc[type].push(log);
+      return acc;
+    }, {} as Record<string, CallLog[]>);
+
+    // Parse counts for each type
+    Object.entries(logsByType).forEach(([type, typeLogs]) => {
+      counts[type] = parseGuestRequests(typeLogs);
+    });
+
+    return counts;
+  }, [filteredLogs]);
+
 
   const stats = useMemo(() => {
     const uniqueRooms = new Set(logs.map((l) => l.roomNo)).size;
-    const undeliveredCount = logs.filter((l) => l.callType === 'guest' && !l.remarks).length;
+    const undeliveredCount = logs.filter(
+      (l) => l.callType === "guest" && !l.remarks,
+    ).length;
+
+    const typeCounts = logs.reduce((acc, log) => {
+      const type = log.callType || "guest";
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
     return {
       totalLogs: logs.length,
       uniqueRooms,
       undeliveredCount,
-      avgRequests:
-        uniqueRooms > 0 ? (logs.length / uniqueRooms).toFixed(1) : "0",
+      avgRequests: uniqueRooms > 0 ? (logs.length / uniqueRooms).toFixed(1) : "0",
+      typeCounts
     };
   }, [logs]);
+
 
   const handleLogin = useCallback(() => {
     setIsAuthenticated(true);
     sessionStorage.setItem("telex-auth", "true");
+    setShowTerms(true);
     toast.success("Welcome back!", {
       description: "Successfully authenticated to Telex Monitoring.",
     });
   }, []);
+
 
   const handleAdd = useCallback(
     (
@@ -204,7 +239,9 @@ export default function Home() {
 
   const exportToExcel = useCallback(() => {
     if (logs.length === 0) {
-      toast.error("No data to export", { description: "Please add some entries first." });
+      toast.error("No data to export", {
+        description: "Please add some entries first.",
+      });
       return;
     }
 
@@ -227,7 +264,9 @@ export default function Home() {
       wb,
       `Telex_Logs_${new Date().toISOString().split("T")[0]}.xlsx`,
     );
-    toast.success("Excel Downloaded", { description: `${logs.length} entries exported.` });
+    toast.success("Excel Downloaded", {
+      description: `${logs.length} entries exported.`,
+    });
   }, [logs]);
 
   const copyTableToClipboard = useCallback(() => {
@@ -255,34 +294,36 @@ export default function Home() {
   }, [logs]);
 
   const copyForViber = useCallback(() => {
-    const text = logs
+    const guestLogs = logs.filter(log => log.callType === 'guest' || !log.callType);
+    const text = guestLogs
       .map((log) => {
-        const prefix =
-          log.callType === "res_out" || log.callType === "inq_out"
-            ? "out"
-            : "hi";
-        return `${prefix} ${log.roomNo} ${log.lastName} ${log.guestReq}`;
+        return `hi ${log.roomNo} ${log.lastName} ${log.guestReq}`;
       })
       .join("\n");
 
     navigator.clipboard.writeText(text).then(() => {
       setViberCopySuccess(true);
       toast.success("Viber Format Copied", {
-        description: `${logs.length} entries formatted for Viber.`,
+        description: `${guestLogs.length} guest entries formatted for Viber.`,
       });
       setTimeout(() => setViberCopySuccess(false), 2000);
     });
   }, [logs]);
 
+
   const copyAllForNotepad = useCallback(() => {
     if (logs.length === 0) {
-      toast.error("No data to copy", { description: "Please add some entries first." });
+      toast.error("No data to copy", {
+        description: "Please add some entries first.",
+      });
       return;
     }
 
     const text = logs
       .map((log) => {
-        const timestamp = formatFullTimestamp(new Date(log.createdAt || Date.now()));
+        const timestamp = formatFullTimestamp(
+          new Date(log.createdAt || Date.now()),
+        );
         const prefix =
           log.callType === "res_out" || log.callType === "inq_out"
             ? "out"
@@ -301,24 +342,47 @@ export default function Home() {
   }, [logs]);
 
   const copyCounts = useCallback(() => {
-    const text = Object.entries(guestRequestCounts)
-      .map(([item, count]) => `${count}${item.toUpperCase()}`)
-      .join(",");
+    const typeLabels: Record<string, string> = {
+      guest: "GUEST REQ",
+      res_in: "TRANSFER IN",
+      res_out: "TRANSFER OUT",
+      inq_in: "INQ IN",
+      inq_out: "INQ OUT",
+      booking_confirmation: "BOOKING CONF"
+    };
+
+    const text = Object.entries(guestRequestCountsByType)
+      .filter(([_, counts]) => Object.keys(counts).length > 0)
+      .map(([type, counts]) => {
+        const typeLabel = typeLabels[type] || type.toUpperCase();
+        const itemText = Object.entries(counts)
+          .map(([item, count]) => `${count}${item.toUpperCase()}`)
+          .join(",");
+        return `[${typeLabel}]\n${itemText}`;
+      })
+      .join("\n\n");
 
     navigator.clipboard.writeText(text).then(() => {
       setCountsCopySuccess(true);
       toast.success("Totals Copied", {
-        description: text || "No items to copy.",
+        description: text ? "All type totals copied to clipboard." : "No items to copy.",
       });
       setTimeout(() => setCountsCopySuccess(false), 2000);
     });
-  }, [guestRequestCounts]);
+  }, [guestRequestCountsByType]);
+
 
   const handleLogout = useCallback(() => {
     setIsAuthenticated(false);
     sessionStorage.removeItem("telex-auth");
+    localStorage.removeItem("call-logs");
+    localStorage.removeItem("telex-logs");
+    localStorage.removeItem("monitoring-logs");
+    setLogs([]);
+    setIsLogoutModalOpen(false);
     toast.info("Logged out", {
-      description: "You have been securely logged out.",
+      description:
+        "You have been securely logged out and all session data has been cleared.",
     });
   }, []);
 
@@ -335,11 +399,12 @@ export default function Home() {
       onLogout={() => setIsLogoutModalOpen(true)}
       onReset={() => setIsModalOpen(true)}
     >
-      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <div className="p-4 md:p-8 w-auto mx-auto space-y-8 animate-in fade-in duration-500">
         <Toaster position="top-right" richColors />
 
-        {activeTab === "dashboard" ? (
+        {activeTab === "dashboard" && (
           <div className="space-y-8">
+
             <header>
               <h1 className="text-3xl font-black text-slate-800">
                 Operational Overview
@@ -354,35 +419,64 @@ export default function Home() {
             <section>
               <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
                 <BarChart3 size={16} strokeWidth={3} />
-                Item Distribution
+                Item Distribution by Type
               </div>
-              <div className="p-6 rounded-2xl glass border border-border/50 luxury-shadow">
-                <div className="flex flex-wrap gap-4">
-                  {Object.entries(guestRequestCounts).length > 0 ? (
-                    Object.entries(guestRequestCounts).map(([item, count]) => (
-                      <div
-                        key={item}
-                        className="flex flex-col items-center justify-center min-w-[100px] p-4 rounded-xl bg-white border border-border shadow-sm transition-all hover:scale-105"
-                      >
-                        <span className="text-3xl font-black text-primary">
-                          {count}
-                        </span>
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                          {item}
-                        </span>
+              <div className="p-6 rounded-2xl glass border border-border/50 luxury-shadow space-y-6">
+                {Object.entries(guestRequestCountsByType).some(([_, c]) => Object.keys(c).length > 0) ? (
+                  Object.entries(guestRequestCountsByType).map(([type, counts]) => {
+                    if (Object.keys(counts).length === 0) return null;
+                    return (
+                      <div key={type} className="space-y-3">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                          {type === 'guest' ? 'Guest Requests' : 
+                           type === 'res_in' ? 'Transfers (In)' :
+                           type === 'res_out' ? 'Transfers (Out)' :
+                           type === 'inq_in' ? 'Inquiries (In)' :
+                           type === 'inq_out' ? 'Inquiries (Out)' :
+                           'Booking Confirmations'}
+                        </p>
+                        <div className="flex flex-wrap gap-4">
+                          {Object.entries(counts).map(([item, count]) => (
+                            <div
+                              key={item}
+                              className="flex flex-col items-center justify-center min-w-[80px] p-3 rounded-xl bg-white border border-border shadow-sm transition-all hover:scale-105"
+                            >
+                              <span className="text-2xl font-black text-primary">
+                                {count}
+                              </span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                {item}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">
-                      No data to visualize yet.
-                    </p>
-                  )}
-                </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">
+                    No data to visualize yet.
+                  </p>
+                )}
               </div>
             </section>
           </div>
-        ) : (
-          <>
+        )}
+
+
+        {activeTab === "counter" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <RequestCounter
+              countsByType={guestRequestCountsByType}
+              onCopyTotals={copyCounts}
+              copyState={countsCopySuccess}
+            />
+          </div>
+        )}
+
+        {activeTab === "monitoring" && (
+          <div className="space-y-8">
+
             {/* Entry Section */}
             <section>
               <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
@@ -392,20 +486,8 @@ export default function Home() {
               <AddEntry onAdd={handleAdd} />
             </section>
 
-            {/* Guest Request Summary */}
-            {logs.length > 0 && (
-              <RequestCounter
-                counts={guestRequestCounts}
-                onCopyTotals={copyCounts}
-                onCopyViber={copyForViber}
-                onCopyNotepad={copyAllForNotepad}
-                copyStates={{
-                  totals: countsCopySuccess,
-                  viber: viberCopySuccess,
-                  notepad: notepadCopySuccess,
-                }}
-              />
-            )}
+
+
 
             {/* Table Section */}
             <section className="space-y-4">
@@ -439,22 +521,37 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={copyTableToClipboard}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all shadow-md shadow-slate-200 font-bold text-xs"
-                  >
-                    {copySuccess ? <Check size={14} /> : <Copy size={14} />}
-                    {copySuccess ? "Copied!" : "Copy Excel"}
-                  </button>
-                  <button
-                    onClick={exportToExcel}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-md shadow-primary/20 font-bold text-xs"
-                  >
-                    <Download size={14} />
-                    Export Excel
-                  </button>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={copyAllForNotepad}
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200 font-bold text-xs"
+                    >
+                      {notepadCopySuccess ? <Check size={14} /> : <FileText size={14} />}
+                      {notepadCopySuccess ? "Notepad Copied!" : "Copy Notepad"}
+                    </button>
+                    <button
+                      onClick={copyForViber}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 font-bold text-xs"
+                    >
+                      {viberCopySuccess ? <Check size={14} /> : <MessageCircle size={14} />}
+                      {viberCopySuccess ? "Viber Copied!" : "Copy Viber"}
+                    </button>
+                    <button
+                      onClick={copyTableToClipboard}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all shadow-md shadow-slate-200 font-bold text-xs"
+                    >
+                      {copySuccess ? <Check size={14} /> : <Copy size={14} />}
+                      {copySuccess ? "Excel Copied!" : "Copy Excel"}
+                    </button>
+                    <button
+                      onClick={exportToExcel}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-md shadow-primary/20 font-bold text-xs"
+                    >
+                      <Download size={14} />
+                      Export Excel
+                    </button>
+                  </div>
+
               </div>
               <MonitoringTable
                 data={filteredLogs}
@@ -462,8 +559,9 @@ export default function Home() {
                 onDelete={(id) => setDeleteId(id)}
               />
             </section>
-          </>
+          </div>
         )}
+
 
         {/* Modals */}
         <Modal
@@ -494,11 +592,14 @@ export default function Home() {
           isOpen={isLogoutModalOpen}
           onClose={() => setIsLogoutModalOpen(false)}
           onLogout={handleLogout}
-          onDownload={exportToExcel}
-          onCopyAll={copyAllForNotepad}
-          copySuccess={notepadCopySuccess}
+        />
+
+        <TermsModal 
+          isOpen={showTerms}
+          onAccept={() => setShowTerms(false)}
         />
       </div>
+
     </NavShell>
   );
 }

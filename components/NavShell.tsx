@@ -1,13 +1,13 @@
 "use client";
 
 import React from 'react';
-import { LayoutDashboard, Activity, LogOut, RefreshCcw, Hotel } from 'lucide-react';
+import { LayoutDashboard, Activity, LogOut, RefreshCcw, Hotel, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavShellProps {
   children: React.ReactNode;
-  activeTab: 'monitoring' | 'dashboard';
-  setActiveTab: (tab: 'monitoring' | 'dashboard') => void;
+  activeTab: 'monitoring' | 'dashboard' | 'counter';
+  setActiveTab: (tab: 'monitoring' | 'dashboard' | 'counter') => void;
   onLogout: () => void;
   onReset: () => void;
 }
@@ -60,6 +60,18 @@ export const NavShell: React.FC<NavShellProps> = ({
             <Activity size={20} />
             Monitoring
           </button>
+          <button
+            onClick={() => setActiveTab('counter')}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm",
+              activeTab === 'counter' 
+                ? "bg-primary/10 text-primary shadow-sm" 
+                : "text-slate-500 hover:bg-slate-50"
+            )}
+          >
+            <BarChart3 size={20} />
+            Counter
+          </button>
         </nav>
 
         <div className="p-4 border-t border-slate-100 space-y-2">
@@ -91,6 +103,7 @@ export const NavShell: React.FC<NavShellProps> = ({
           <div className="flex items-center gap-2">
              <button onClick={() => setActiveTab('dashboard')} className={cn("p-2 rounded-lg", activeTab === 'dashboard' ? "text-primary bg-primary/10" : "text-slate-400")}><LayoutDashboard size={20} /></button>
              <button onClick={() => setActiveTab('monitoring')} className={cn("p-2 rounded-lg", activeTab === 'monitoring' ? "text-primary bg-primary/10" : "text-slate-400")}><Activity size={20} /></button>
+             <button onClick={() => setActiveTab('counter')} className={cn("p-2 rounded-lg", activeTab === 'counter' ? "text-primary bg-primary/10" : "text-slate-400")}><BarChart3 size={20} /></button>
           </div>
         </header>
 
@@ -101,3 +114,4 @@ export const NavShell: React.FC<NavShellProps> = ({
     </div>
   );
 };
+

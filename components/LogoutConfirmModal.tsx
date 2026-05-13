@@ -8,18 +8,12 @@ interface LogoutConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
-  onDownload: () => void;
-  onCopyAll: () => void;
-  copySuccess: boolean;
 }
 
 export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({ 
   isOpen, 
   onClose, 
-  onLogout, 
-  onDownload,
-  onCopyAll,
-  copySuccess
+  onLogout 
 }) => {
   const [password, setPassword] = React.useState("");
   const isAuthorized = password === "clyanntelex";
@@ -50,27 +44,9 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
               <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 space-y-2">
                 <p className="text-sm font-black uppercase tracking-widest text-center">⚠️ CRITICAL WARNING ⚠️</p>
                 <p className="text-xs font-bold text-center leading-relaxed">
-                  Logging out will PERMANENTLY WIPE all session data. 
-                  Ensure you have DOWNLOADED or COPIED all your work before proceeding.
+                  Logging out will PERMANENTLY WIPE all session data from this device. 
+                  This action cannot be undone.
                 </p>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={onDownload}
-                  className="flex items-center justify-center gap-3 w-full p-4 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 font-bold"
-                >
-                  <Download size={20} />
-                  Full Download (Excel)
-                </button>
-                
-                <button
-                  onClick={onCopyAll}
-                  className="flex items-center justify-center gap-3 w-full p-4 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 font-bold"
-                >
-                  {copySuccess ? <Check size={20} /> : <FileText size={20} />}
-                  {copySuccess ? "Data Copied!" : "Full Copy (Notepad)"}
-                </button>
               </div>
 
               <div className="space-y-2 pt-4 border-t border-slate-100">
@@ -78,6 +54,7 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
                   Authorize Logout (Password)
                 </label>
                 <input
+                  autoFocus
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -112,3 +89,4 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
     </AnimatePresence>
   );
 };
+

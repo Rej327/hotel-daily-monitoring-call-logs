@@ -56,22 +56,29 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                   />
                 </td>
                 <td className="p-4 text-center">
-                  <span className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter",
-                    log.callType === 'res_in' ? "bg-purple-100 text-purple-600" :
-                    log.callType === 'res_out' ? "bg-pink-100 text-pink-600" :
-                    log.callType === 'booking_confirmation' ? "bg-amber-100 text-amber-600" :
-                    (log.callType === 'inq_in' || log.callType === 'inq_out') ? "bg-blue-100 text-blue-600" :
-                    "bg-slate-100 text-slate-600"
-                  )}>
-                    {log.callType === 'res_in' ? 'Transfer (In)' :
-                     log.callType === 'res_out' ? 'Transfer (Out)' :
-                     log.callType === 'inq_in' ? 'Inq (In)' :
-                     log.callType === 'inq_out' ? 'Inq (Out)' :
-                     log.callType === 'booking_confirmation' ? 'Booking' :
-                     log.callType || 'guest'}
-                  </span>
+                  <EditableCell 
+                    value={log.callType || "guest"} 
+                    onSave={(val) => onUpdate(log.id, 'callType', val)} 
+                    type="dropdown"
+                    options={[
+                      { value: 'guest', label: 'Guest Req' },
+                      { value: 'res_in', label: 'Transfer (In)' },
+                      { value: 'res_out', label: 'Transfer (Out)' },
+                      { value: 'inq_in', label: 'Inq (In)' },
+                      { value: 'inq_out', label: 'Inq (Out)' },
+                      { value: 'booking_confirmation', label: 'Booking' }
+                    ]}
+                    className={cn(
+                      "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter inline-block w-full",
+                      log.callType === 'res_in' ? "bg-purple-100 text-purple-600" :
+                      log.callType === 'res_out' ? "bg-pink-100 text-pink-600" :
+                      log.callType === 'booking_confirmation' ? "bg-amber-100 text-amber-600" :
+                      (log.callType === 'inq_in' || log.callType === 'inq_out') ? "bg-blue-100 text-blue-600" :
+                      "bg-slate-100 text-slate-600"
+                    )}
+                  />
                 </td>
+
                 <td className="p-4">
                   <EditableCell 
                     value={log.roomNo} 
@@ -212,9 +219,11 @@ interface EditableCellProps {
   onSave: (value: string) => void;
   onEditStart?: () => void;
   className?: string;
-  type?: 'text' | 'time';
+  type?: 'text' | 'time' | 'dropdown';
+  options?: { value: string; label: string }[];
   placeholder?: string;
 }
+
 
 const EditableCellComponent: React.FC<EditableCellProps> = ({ 
   value, 
@@ -222,8 +231,10 @@ const EditableCellComponent: React.FC<EditableCellProps> = ({
   onEditStart, 
   className, 
   type = 'text',
+  options = [],
   placeholder = "---"
 }) => {
+
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentValue, setCurrentValue] = React.useState(value);
 
@@ -275,6 +286,29 @@ const EditableCellComponent: React.FC<EditableCellProps> = ({
       );
     }
 
+    if (type === 'dropdown') {
+      return (
+        <select
+          autoFocus
+          value={currentValue}
+          onChange={(e) => {
+            setCurrentValue(e.target.value);
+            onSave(e.target.value);
+            setIsEditing(false);
+          }}
+          onBlur={() => setIsEditing(false)}
+          className={cn(
+            "w-full bg-white border border-primary/50 rounded px-1 py-0.5 outline-none ring-1 ring-primary/30 text-[10px] font-black uppercase tracking-tighter",
+            className
+          )}
+        >
+          {options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      );
+    }
+
     return (
       <input
         autoFocus
@@ -289,16 +323,22 @@ const EditableCellComponent: React.FC<EditableCellProps> = ({
         )}
       />
     );
+
   }
+
+  const displayValue = type === 'dropdown' 
+    ? options.find(opt => opt.value === value)?.label || value
+    : value;
 
   return (
     <div 
       onClick={startEditing}
       className={cn("cursor-pointer hover:text-primary transition-colors min-h-[1.5rem]", className)}
     >
-      {value || <span className="text-slate-300 italic">{placeholder}</span>}
+      {displayValue || <span className="text-slate-300 italic">{placeholder}</span>}
     </div>
   );
+
 };
 
 const EditableCell = React.memo(EditableCellComponent);
