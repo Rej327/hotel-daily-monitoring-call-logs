@@ -4,77 +4,81 @@ import React from 'react';
 import { BarChart3, Check, Copy, MessageCircle, FileText } from 'lucide-react';
 
 interface RequestCounterProps {
-  counts: Record<string, number>;
+  countsByType: Record<string, Record<string, number>>;
   onCopyTotals: () => void;
-  onCopyViber: () => void;
-  onCopyNotepad: () => void;
-  copyStates: {
-    totals: boolean;
-    viber: boolean;
-    notepad: boolean;
-  };
+  copyState: boolean;
 }
 
 export const RequestCounter: React.FC<RequestCounterProps> = ({ 
-  counts, 
+  countsByType, 
   onCopyTotals, 
-  onCopyViber, 
-  onCopyNotepad,
-  copyStates 
+  copyState
 }) => {
-  const hasCounts = Object.entries(counts).length > 0;
+  const typeLabels: Record<string, string> = {
+    guest: "Guest Requests",
+    res_in: "Transfers (In)",
+    res_out: "Transfers (Out)",
+    inq_in: "Inquiries (In)",
+    inq_out: "Inquiries (Out)",
+    booking_confirmation: "Booking Confirmations"
+  };
+
+  const hasAnyCounts = Object.values(countsByType).some(c => Object.keys(c).length > 0);
 
   return (
-    <section className="animate-in slide-in-from-bottom-2 duration-500">
-      <div className="mb-4 flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
-        <BarChart3 size={16} strokeWidth={3} />
-        Guest Request Counter
-      </div>
-      <div className="p-6 rounded-2xl glass border border-border/50 luxury-shadow">
-        <div className="flex flex-wrap gap-4">
-          {hasCounts ? (
-            Object.entries(counts).map(([item, count]) => (
-              <div key={item} className="flex flex-col items-center justify-center min-w-[80px] p-3 rounded-xl bg-white border border-border shadow-sm hover:scale-105 transition-transform">
-                <span className="text-2xl font-black text-primary">{count}</span>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{item}</span>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground italic">No specific item requests detected.</p>
-          )}
-        </div>
-        
-        {hasCounts && (
-          <div className="mt-6 pt-6 border-t border-border/50 flex items-center justify-between">
-            <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-              Quick Actions
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-3xl font-black text-slate-800">Request Item Counter</h1>
+        <p className="text-muted-foreground font-medium">Categorized breakdown of all guest items and service requests.</p>
+      </header>
+
+      <div className="p-8 rounded-[2rem] glass border border-border/50 luxury-shadow space-y-10">
+        {!hasAnyCounts ? (
+          <div className="py-20 text-center space-y-4">
+            <div className="inline-flex p-4 rounded-full bg-slate-50 text-slate-300">
+              <BarChart3 size={40} />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No item requests detected yet</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-12">
+              {Object.entries(countsByType).map(([type, counts]) => {
+                if (Object.keys(counts).length === 0) return null;
+                return (
+                  <div key={type} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <h2 className="text-xs font-black text-primary uppercase tracking-[0.2em] whitespace-nowrap">
+                        {typeLabels[type] || type}
+                      </h2>
+                      <div className="h-px w-full bg-slate-100"></div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                      {Object.entries(counts).map(([item, count]) => (
+                        <div key={item} className="group relative flex flex-col items-center justify-center p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                          <span className="text-4xl font-black text-slate-800 group-hover:text-primary transition-colors">{count}</span>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2 group-hover:text-slate-600 transition-colors">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-8 border-t border-slate-100 flex items-center justify-end">
               <button
                 onClick={onCopyTotals}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all shadow-lg shadow-slate-200 font-bold text-xs"
+                className="group flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl hover:bg-primary transition-all shadow-lg shadow-slate-200 font-black text-sm uppercase tracking-widest"
               >
-                {copyStates.totals ? <Check size={14} /> : <Copy size={14} />}
-                {copyStates.totals ? "Totals Copied!" : "Copy Totals"}
-              </button>
-              <button
-                onClick={onCopyNotepad}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 font-bold text-xs"
-              >
-                {copyStates.notepad ? <Check size={14} /> : <FileText size={14} />}
-                {copyStates.notepad ? "Logs Copied!" : "Copy Notepad"}
-              </button>
-              <button
-                onClick={onCopyViber}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 font-bold text-xs"
-              >
-                {copyStates.viber ? <Check size={14} /> : <MessageCircle size={14} />}
-                {copyStates.viber ? "Viber Copied!" : "Copy Viber"}
+                {copyState ? <Check size={18} /> : <Copy size={18} />}
+                {copyState ? "Totals Copied!" : "Copy Totals Report"}
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
-    </section>
+    </div>
   );
 };
+

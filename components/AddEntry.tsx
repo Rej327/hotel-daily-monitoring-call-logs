@@ -1,20 +1,40 @@
 "use client";
 
-import React from 'react';
-import { parseSpaceSeparatedLine } from '@/lib/utils';
-import { CallLog } from '@/types';
-import { Keyboard } from 'lucide-react';
+import React from "react";
+import { parseSpaceSeparatedLine } from "@/lib/utils";
+import { CallLog } from "@/types";
+import { Keyboard } from "lucide-react";
 
 interface AddEntryProps {
-  onAdd: (entry: Omit<CallLog, 'id' | 'followUp' | 'timeOfRequest' | 'acknowledgedBy' | 'createdAt'> & { callType: 'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation' }) => void;
+  onAdd: (
+    entry: Omit<
+      CallLog,
+      "id" | "followUp" | "timeOfRequest" | "acknowledgedBy" | "createdAt"
+    > & {
+      callType:
+        | "guest"
+        | "res_in"
+        | "res_out"
+        | "inq_in"
+        | "inq_out"
+        | "booking_confirmation";
+    },
+  ) => void;
 }
 
 export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
   const [input, setInput] = React.useState("");
-  const [callType, setCallType] = React.useState<'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation'>('guest');
+  const [callType, setCallType] = React.useState<
+    | "guest"
+    | "res_in"
+    | "res_out"
+    | "inq_in"
+    | "inq_out"
+    | "booking_confirmation"
+  >("guest");
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -24,10 +44,10 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
     if (!input.trim()) return;
 
     const parts = parseSpaceSeparatedLine(input);
-    if (parts.length < 3) return; 
-    
+    if (parts.length < 3) return;
+
     const requestedBy = parts[0] || "";
-    
+
     // Find the index of the room number (usually the first numeric part after the name)
     // We start searching from index 1 (after requestedBy)
     let roomIndex = -1;
@@ -59,7 +79,7 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
         roomNo = parts[roomIndex];
         guestReq = parts.slice(roomIndex + 1).join(" ");
       }
-      
+
       // Handle potential extra fields if needed (pos 4/5)
       const remaining = guestReq.split(" ");
       guestReq = (remaining[0] || "").replace(/\./g, " ");
@@ -74,14 +94,25 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
       remarks = parts.slice(5).join(" ");
     }
 
-    const newLog: Omit<CallLog, 'id' | 'followUp' | 'timeOfRequest' | 'acknowledgedBy' | 'createdAt'> & { callType: 'guest' | 'res_in' | 'res_out' | 'inq_in' | 'inq_out' | 'booking_confirmation' } = {
+    const newLog: Omit<
+      CallLog,
+      "id" | "followUp" | "timeOfRequest" | "acknowledgedBy" | "createdAt"
+    > & {
+      callType:
+        | "guest"
+        | "res_in"
+        | "res_out"
+        | "inq_in"
+        | "inq_out"
+        | "booking_confirmation";
+    } = {
       requestedBy,
       lastName,
       roomNo,
       guestReq,
       timeOfDelivered,
       remarks,
-      callType
+      callType,
     };
 
     onAdd(newLog);
@@ -90,27 +121,6 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex flex-wrap gap-2 mb-2">
-        {(['guest', 'res_in', 'res_out', 'inq_in', 'inq_out', 'booking_confirmation'] as const).map((type) => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => setCallType(type)}
-            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-              callType === type 
-                ? "bg-primary text-white shadow-md shadow-primary/20 scale-105" 
-                : "bg-white border border-border text-muted-foreground hover:bg-slate-50"
-            }`}
-          >
-            {type === 'guest' ? 'Guest Req' : 
-             type === 'res_in' ? 'Transfer (In)' : 
-             type === 'res_out' ? 'Transfer (Out)' : 
-             type === 'inq_in' ? 'Inq (In)' : 
-             type === 'inq_out' ? 'Inq (Out)' : 
-             'Booking Conf'}
-          </button>
-        ))}
-      </div>
       <div className="relative">
         <textarea
           value={input}
@@ -124,9 +134,45 @@ export const AddEntry: React.FC<AddEntryProps> = ({ onAdd }) => {
           <span>Press Enter to append</span>
         </div>
       </div>
-      
+      <div className="flex flex-wrap gap-2 mb-2">
+        {(
+          [
+            "guest",
+            "res_in",
+            "res_out",
+            "inq_in",
+            "inq_out",
+            "booking_confirmation",
+          ] as const
+        ).map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => setCallType(type)}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+              callType === type
+                ? "bg-primary text-white shadow-md shadow-primary/20 scale-105"
+                : "bg-white border border-border text-muted-foreground hover:bg-slate-50"
+            }`}
+          >
+            {type === "guest"
+              ? "Guest Req"
+              : type === "res_in"
+                ? "Transfer (In)"
+                : type === "res_out"
+                  ? "Transfer (Out)"
+                  : type === "inq_in"
+                    ? "Inq (In)"
+                    : type === "inq_out"
+                      ? "Inq (Out)"
+                      : "Booking Conf"}
+          </button>
+        ))}
+      </div>
+
       <div className="text-[10px] text-muted-foreground italic px-1">
-        Format: [Tag] [Room] [Name] [Request] (Tip: use dots for names like dela.cruz)
+        Format: [Tag] [Room] [Name] [Request] (Tip: use dots for names like
+        dela.cruz)
       </div>
     </div>
   );

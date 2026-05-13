@@ -54,8 +54,9 @@ export function parseGuestRequests(logs: { guestReq: string }[]): Record<string,
   logs.forEach(log => {
     if (!log.guestReq) return;
     
-    // Split by comma, space, or plus if multiple items
-    const items = log.guestReq.split(/[, +]+/);
+    // Split by comma or plus if multiple items
+    const items = log.guestReq.split(/[,+]+/);
+
     
     items.forEach(item => {
       const trimmed = item.trim().toLowerCase();

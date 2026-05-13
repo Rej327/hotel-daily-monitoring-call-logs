@@ -12,10 +12,19 @@ interface MonitoringTableProps {
   data: CallLog[];
   onUpdate: (id: string, field: keyof CallLog, value: string | number) => void;
   onDelete: (id: string) => void;
+  isPrivacyMode?: boolean;
 }
 
-const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpdate, onDelete }) => {
+const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ 
+  data, 
+  onUpdate, 
+  onDelete,
+  isPrivacyMode = false
+}) => {
+  const privacyBlur = isPrivacyMode ? "blur-md select-none hover:blur-none transition-all duration-300" : "";
+
   return (
+
     <div className="w-full overflow-x-auto rounded-xl luxury-shadow glass border border-border/50">
       <table className="w-full text-left border-collapse min-w-[1100px]">
         <thead>
@@ -49,48 +58,59 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({ data, onUpda
                     : "border-border/30 hover:bg-muted/50"
                 )}
               >
-                <td className="p-4">
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.requestedBy} 
                     onSave={(val) => onUpdate(log.id, 'requestedBy', val)} 
                   />
                 </td>
+
                 <td className="p-4 text-center">
-                  <span className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter",
-                    log.callType === 'res_in' ? "bg-purple-100 text-purple-600" :
-                    log.callType === 'res_out' ? "bg-pink-100 text-pink-600" :
-                    log.callType === 'booking_confirmation' ? "bg-amber-100 text-amber-600" :
-                    (log.callType === 'inq_in' || log.callType === 'inq_out') ? "bg-blue-100 text-blue-600" :
-                    "bg-slate-100 text-slate-600"
-                  )}>
-                    {log.callType === 'res_in' ? 'Transfer (In)' :
-                     log.callType === 'res_out' ? 'Transfer (Out)' :
-                     log.callType === 'inq_in' ? 'Inq (In)' :
-                     log.callType === 'inq_out' ? 'Inq (Out)' :
-                     log.callType === 'booking_confirmation' ? 'Booking' :
-                     log.callType || 'guest'}
-                  </span>
+                  <EditableCell 
+                    value={log.callType || "guest"} 
+                    onSave={(val) => onUpdate(log.id, 'callType', val)} 
+                    type="dropdown"
+                    options={[
+                      { value: 'guest', label: 'Guest Req' },
+                      { value: 'res_in', label: 'Transfer (In)' },
+                      { value: 'res_out', label: 'Transfer (Out)' },
+                      { value: 'inq_in', label: 'Inq (In)' },
+                      { value: 'inq_out', label: 'Inq (Out)' },
+                      { value: 'booking_confirmation', label: 'Booking' }
+                    ]}
+                    className={cn(
+                      "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter inline-block w-full",
+                      log.callType === 'res_in' ? "bg-purple-100 text-purple-600" :
+                      log.callType === 'res_out' ? "bg-pink-100 text-pink-600" :
+                      log.callType === 'booking_confirmation' ? "bg-amber-100 text-amber-600" :
+                      (log.callType === 'inq_in' || log.callType === 'inq_out') ? "bg-blue-100 text-blue-600" :
+                      "bg-slate-100 text-slate-600"
+                    )}
+                  />
                 </td>
-                <td className="p-4">
+
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.roomNo} 
                     onSave={(val) => onUpdate(log.id, 'roomNo', val)} 
                   />
                 </td>
-                <td className="p-4">
+
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.lastName} 
                     onSave={(val) => onUpdate(log.id, 'lastName', val)} 
                   />
                 </td>
-                <td className="p-4">
+
+                <td className={cn("p-4", privacyBlur)}>
                   <EditableCell 
                     value={log.guestReq} 
                     onSave={(val) => onUpdate(log.id, 'guestReq', val)} 
                     className="font-bold text-primary"
                   />
                 </td>
+
                 <td className="p-4 font-mono text-xs">
                   <EditableCell 
                     value={log.timeOfRequest} 
@@ -212,9 +232,11 @@ interface EditableCellProps {
   onSave: (value: string) => void;
   onEditStart?: () => void;
   className?: string;
-  type?: 'text' | 'time';
+  type?: 'text' | 'time' | 'dropdown';
+  options?: { value: string; label: string }[];
   placeholder?: string;
 }
+
 
 const EditableCellComponent: React.FC<EditableCellProps> = ({ 
   value, 
@@ -222,8 +244,10 @@ const EditableCellComponent: React.FC<EditableCellProps> = ({
   onEditStart, 
   className, 
   type = 'text',
+  options = [],
   placeholder = "---"
 }) => {
+
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentValue, setCurrentValue] = React.useState(value);
 
@@ -275,6 +299,29 @@ const EditableCellComponent: React.FC<EditableCellProps> = ({
       );
     }
 
+    if (type === 'dropdown') {
+      return (
+        <select
+          autoFocus
+          value={currentValue}
+          onChange={(e) => {
+            setCurrentValue(e.target.value);
+            onSave(e.target.value);
+            setIsEditing(false);
+          }}
+          onBlur={() => setIsEditing(false)}
+          className={cn(
+            "w-full bg-white border border-primary/50 rounded px-1 py-0.5 outline-none ring-1 ring-primary/30 text-[10px] font-black uppercase tracking-tighter",
+            className
+          )}
+        >
+          {options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      );
+    }
+
     return (
       <input
         autoFocus
@@ -289,16 +336,22 @@ const EditableCellComponent: React.FC<EditableCellProps> = ({
         )}
       />
     );
+
   }
+
+  const displayValue = type === 'dropdown' 
+    ? options.find(opt => opt.value === value)?.label || value
+    : value;
 
   return (
     <div 
       onClick={startEditing}
       className={cn("cursor-pointer hover:text-primary transition-colors min-h-[1.5rem]", className)}
     >
-      {value || <span className="text-slate-300 italic">{placeholder}</span>}
+      {displayValue || <span className="text-slate-300 italic">{placeholder}</span>}
     </div>
   );
+
 };
 
 const EditableCell = React.memo(EditableCellComponent);
