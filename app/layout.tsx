@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Grand Hotel Monitoring | Daily Call Logs",
-  description: "Luxury hotel service tracking and monitoring system.",
+  title: "Holiday Inn & Suites Manila Galleria by IHG",
+  description: "Hotel Service Call Logs.",
 };
 
 export default function RootLayout({
@@ -23,8 +23,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${outfit.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body
+        className="min-h-full flex flex-col bg-background text-foreground"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
