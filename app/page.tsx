@@ -77,7 +77,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUser, setCurrentUser] = useState<"cly" | "ann">("cly");
 
-
   // Persistence Logic
   const togglePrivacyMode = useCallback((val: boolean) => {
     setIsPrivacyMode(val);
@@ -137,7 +136,6 @@ export default function Home() {
       });
     }
   }, [isClient]);
-
 
   // Sync to LocalStorage
   useEffect(() => {
@@ -327,12 +325,13 @@ export default function Home() {
 
   const copyTableToClipboard = useCallback(() => {
     const text = logs
-      .map(
-        (log) =>
-          `${formatFullTimestamp(new Date(log.createdAt))} hi ${log.roomNo} ${log.lastName} ${log.guestReq}`,
-      )
-
-
+      .map((log) => {
+        const prefix =
+          log.callType === "res_out" || log.callType === "inq_out"
+            ? "out"
+            : "hi";
+        return `${formatFullTimestamp(new Date(log.createdAt))} ${prefix} ${log.roomNo} ${log.lastName} - ${log.guestReq}`;
+      })
       .join("\n");
     navigator.clipboard.writeText(text).then(() => {
       setCopySuccess(true);
@@ -348,11 +347,8 @@ export default function Home() {
     const text = guestLogs
       .map(
         (log) =>
-          `hi ${log.roomNo} ${log.lastName} ${log.guestReq} ${log.remarks} // ${currentUser.toUpperCase()}`,
+          `hi ${log.roomNo} ${log.lastName} - ${log.guestReq} Thank you po // ${currentUser.toLocaleLowerCase()}`,
       )
-
-
-
       .join("\n");
     navigator.clipboard.writeText(text).then(() => {
       setViberCopySuccess(true);
@@ -362,7 +358,6 @@ export default function Home() {
       setTimeout(() => setViberCopySuccess(false), 2000);
     });
   }, [logs, currentUser]);
-
 
   const copyTotals = useCallback(() => {
     const typeLabels: Record<string, string> = {
@@ -406,192 +401,187 @@ export default function Home() {
       {!isAuthenticated ? (
         <SecurityPortal onLogin={handleLogin} />
       ) : (
-
-
-      <SecurityGuard
-        isPrivacyMode={isPrivacyMode}
-        onDisablePrivacy={() => togglePrivacyMode(false)}
-      >
-        <NavShell
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onLogout={() => setIsLogoutModalOpen(true)}
-          onReset={() => setIsModalOpen(true)}
+        <SecurityGuard
           isPrivacyMode={isPrivacyMode}
-          setIsPrivacyMode={(val) => {
-            if (!val && isPrivacyMode) setShowPrivacyModal(true);
-            else togglePrivacyMode(val);
-          }}
-          currentUser={currentUser}
-          setCurrentUser={(user) => {
-            setCurrentUser(user);
-            localStorage.setItem("active-account", user);
-          }}
+          onDisablePrivacy={() => togglePrivacyMode(false)}
         >
-
-          <div className="p-4 md:p-8 w-auto mx-auto space-y-8 animate-in fade-in duration-500">
-
-
-
-            {activeTab === "dashboard" && (
-              <div className="space-y-8">
-                <header>
-                  <h1 className="text-3xl font-black text-slate-800">
-                    Operational Overview
-                  </h1>
-                  <p className="text-muted-foreground font-medium">
-                    Daily performance metrics and analytics.
-                  </p>
-                </header>
-                <DashboardStats stats={stats} />
-              </div>
-            )}
-
-            {activeTab === "counter" && (
-              <RequestCounter
-                countsByType={guestRequestCountsByType}
-                onCopyTotals={copyTotals}
-                copyState={countsCopySuccess}
-              />
-            )}
-
-            {activeTab === "monitoring" && (
-              <div className="space-y-8">
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-4">
-                  <div className="flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
-                    <Plus size={16} strokeWidth={3} />
-                    Quick Add Log
-                  </div>
+          <NavShell
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onLogout={() => setIsLogoutModalOpen(true)}
+            onReset={() => setIsModalOpen(true)}
+            isPrivacyMode={isPrivacyMode}
+            setIsPrivacyMode={(val) => {
+              if (!val && isPrivacyMode) setShowPrivacyModal(true);
+              else togglePrivacyMode(val);
+            }}
+            currentUser={currentUser}
+            setCurrentUser={(user) => {
+              setCurrentUser(user);
+              localStorage.setItem("active-account", user);
+            }}
+          >
+            <div className="p-4 md:p-8 w-auto mx-auto space-y-8 animate-in fade-in duration-500">
+              {activeTab === "dashboard" && (
+                <div className="space-y-8">
+                  <header>
+                    <h1 className="text-3xl font-black text-slate-800">
+                      Operational Overview
+                    </h1>
+                    <p className="text-muted-foreground font-medium">
+                      Daily performance metrics and analytics.
+                    </p>
+                  </header>
+                  <DashboardStats stats={stats} />
                 </div>
+              )}
 
+              {activeTab === "counter" && (
+                <RequestCounter
+                  countsByType={guestRequestCountsByType}
+                  onCopyTotals={copyTotals}
+                  copyState={countsCopySuccess}
+                />
+              )}
 
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <AddEntry onAdd={handleAdd} />
+              {activeTab === "monitoring" && (
+                <div className="space-y-8">
+                  <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-2 text-sm font-black text-primary uppercase tracking-widest">
+                      <Plus size={16} strokeWidth={3} />
+                      Quick Add Log
+                    </div>
                   </div>
 
-                  <div className="lg:w-80 flex flex-col gap-4">
-                    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-                      <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
-                        <button
-                          onClick={() => setFilterType("all")}
-                          className={cn(
-                            "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-                            filterType === "all"
-                              ? "bg-white text-primary shadow-sm"
-                              : "text-slate-400 hover:text-slate-600",
-                          )}
-                        >
-                          All Logs
-                        </button>
-                        <button
-                          onClick={() => setFilterType("undelivered")}
-                          className={cn(
-                            "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1.5",
-                            filterType === "undelivered"
-                              ? "bg-white text-red-500 shadow-sm"
-                              : "text-slate-400 hover:text-slate-600",
-                          )}
-                        >
-                          Undelivered
-                          {stats.undeliveredCount > 0 && (
-                            <span className="px-1.5 py-0.5 rounded-md bg-red-50 text-[9px] font-black">
-                              {stats.undeliveredCount}
-                            </span>
-                          )}
-                        </button>
-                      </div>
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                      <AddEntry onAdd={handleAdd} />
+                    </div>
 
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search Room or Guest..."
-                          className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:bg-white focus:border-primary outline-none transition-all"
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
-                          <Plus size={16} className="rotate-45" />
+                    <div className="lg:w-80 flex flex-col gap-4">
+                      <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                        <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                          <button
+                            onClick={() => setFilterType("all")}
+                            className={cn(
+                              "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                              filterType === "all"
+                                ? "bg-white text-primary shadow-sm"
+                                : "text-slate-400 hover:text-slate-600",
+                            )}
+                          >
+                            All Logs
+                          </button>
+                          <button
+                            onClick={() => setFilterType("undelivered")}
+                            className={cn(
+                              "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1.5",
+                              filterType === "undelivered"
+                                ? "bg-white text-red-500 shadow-sm"
+                                : "text-slate-400 hover:text-slate-600",
+                            )}
+                          >
+                            Undelivered
+                            {stats.undeliveredCount > 0 && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-red-50 text-[9px] font-black">
+                                {stats.undeliveredCount}
+                              </span>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search Room or Guest..."
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:bg-white focus:border-primary outline-none transition-all"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300">
+                            <Plus size={16} className="rotate-45" />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={copyExcel}
-                        className={cn(
-                          "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest",
-                          excelCopySuccess
-                            ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-600/10",
-                        )}
-                      >
-                        {excelCopySuccess ? (
-                          <Check size={14} />
-                        ) : (
-                          <FileText size={14} />
-                        )}
-                        Excel
-                      </button>
-                      <button
-                        onClick={copyTableToClipboard}
-                        className={cn(
-                          "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest",
-                          copySuccess
-                            ? "bg-slate-800 text-white shadow-lg shadow-slate-800/20"
-                            : "bg-slate-700 text-white hover:bg-slate-800 shadow-md shadow-slate-700/10",
-                        )}
-                      >
-                        {copySuccess ? <Check size={14} /> : <Copy size={14} />}
-                        Text
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={copyViberFormat}
-                        className={cn(
-                          "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest",
-                          viberCopySuccess
-                            ? "bg-[#7360f2] text-white shadow-lg shadow-[#7360f2]/20"
-                            : "bg-[#6251d1] text-white hover:bg-[#5241b1] shadow-md shadow-[#6251d1]/10",
-                        )}
-                      >
-                        {viberCopySuccess ? (
-                          <Check size={14} />
-                        ) : (
-                          <MessageCircle size={14} />
-                        )}
-                        Viber
-                      </button>
-                      <button
-                        onClick={exportToExcel}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20"
-                      >
-                        <Download size={14} />
-                        File
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={copyExcel}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest",
+                            excelCopySuccess
+                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                              : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-600/10",
+                          )}
+                        >
+                          {excelCopySuccess ? (
+                            <Check size={14} />
+                          ) : (
+                            <FileText size={14} />
+                          )}
+                          Excel
+                        </button>
+                        <button
+                          onClick={copyTableToClipboard}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest",
+                            copySuccess
+                              ? "bg-slate-800 text-white shadow-lg shadow-slate-800/20"
+                              : "bg-slate-700 text-white hover:bg-slate-800 shadow-md shadow-slate-700/10",
+                          )}
+                        >
+                          {copySuccess ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                          Text
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={copyViberFormat}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest",
+                            viberCopySuccess
+                              ? "bg-[#7360f2] text-white shadow-lg shadow-[#7360f2]/20"
+                              : "bg-[#6251d1] text-white hover:bg-[#5241b1] shadow-md shadow-[#6251d1]/10",
+                          )}
+                        >
+                          {viberCopySuccess ? (
+                            <Check size={14} />
+                          ) : (
+                            <MessageCircle size={14} />
+                          )}
+                          Viber
+                        </button>
+                        <button
+                          onClick={exportToExcel}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20"
+                        >
+                          <Download size={14} />
+                          File
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  <MonitoringTable
+                    data={filteredLogs}
+                    onUpdate={handleUpdate}
+                    onDelete={setDeleteId}
+                    isPrivacyMode={isPrivacyMode}
+                    currentUser={currentUser}
+                  />
                 </div>
+              )}
 
-                <MonitoringTable
-                  data={filteredLogs}
-                  onUpdate={handleUpdate}
-                  onDelete={setDeleteId}
-                  isPrivacyMode={isPrivacyMode}
-                  currentUser={currentUser}
-                />
-
-              </div>
-            )}
-
-            <footer className="pt-12 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]">
-              © 2026 Telex Management Systems • Efficiency & Hospitality
-            </footer>
-          </div>
-        </NavShell>
-      </SecurityGuard>
+              <footer className="pt-12 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]">
+                © 2026 Telex Management Systems • Efficiency & Hospitality
+              </footer>
+            </div>
+          </NavShell>
+        </SecurityGuard>
       )}
-
 
       <Modal
         isOpen={isModalOpen}
