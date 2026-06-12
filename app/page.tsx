@@ -290,8 +290,8 @@ export default function Home() {
       "Guest Req": log.guestReq,
       "Time of Request": log.timeOfRequest,
       "Time of Delivered": log.timeOfDelivered,
-      Remarks: log.remarks,
       "Follow up": log.followUp,
+      Remarks: log.remarks,
       "Ack By": log.acknowledgedBy,
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -310,7 +310,7 @@ export default function Home() {
     const rows = logs
       .map(
         (log) =>
-          `${log.requestedBy}\t${log.lastName}\t${log.roomNo}\t${log.guestReq}\t${log.timeOfRequest}\t${log.timeOfDelivered}\t${log.remarks}\t${log.followUp}`,
+          `${log.requestedBy}\t${log.lastName}\t${log.roomNo}\t${log.guestReq}\t${log.timeOfRequest}\t${log.timeOfDelivered}\t${log.followUp}\t${log.remarks}`,
       )
       .join("\n");
 

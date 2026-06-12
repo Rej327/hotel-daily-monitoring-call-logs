@@ -53,11 +53,11 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({
             <th className="p-4 font-bold text-xs uppercase tracking-widest">
               Time of Delivered
             </th>
-            <th className="p-4 font-bold text-xs uppercase tracking-widest">
-              Remarks
-            </th>
             <th className="p-4 font-bold text-xs uppercase tracking-widest text-center">
               Follow up
+            </th>
+            <th className="p-4 font-bold text-xs uppercase tracking-widest">
+              Remarks
             </th>
             <th className="p-4 font-bold text-xs uppercase tracking-widest">
               Ack By
@@ -155,17 +155,6 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({
                     type="time"
                   />
                 </td>
-                <td className="p-4">
-                  <EditableCell
-                    value={log.remarks}
-                    onSave={(val) => onUpdate(log.id, "remarks", val)}
-                    onEditStart={() => {
-                      if (!log.timeOfDelivered) {
-                        onUpdate(log.id, "remarks", log.remarks || "");
-                      }
-                    }}
-                  />
-                </td>
                 <td className="p-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <button
@@ -201,6 +190,17 @@ const MonitoringTableComponent: React.FC<MonitoringTableProps> = ({
                       +
                     </button>
                   </div>
+                </td>
+                <td className="p-4">
+                  <EditableCell
+                    value={log.remarks}
+                    onSave={(val) => onUpdate(log.id, "remarks", val)}
+                    onEditStart={() => {
+                      if (!log.timeOfDelivered) {
+                        onUpdate(log.id, "remarks", log.remarks || "");
+                      }
+                    }}
+                  />
                 </td>
                 <td className="p-4">
                   <EditableCell
