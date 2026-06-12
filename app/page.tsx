@@ -310,7 +310,7 @@ export default function Home() {
     const rows = logs
       .map(
         (log) =>
-          `${log.requestedBy}\t${log.lastName}\t${log.roomNo}\t${log.guestReq}\t${log.timeOfRequest}\t${log.timeOfDelivered}\t${log.followUp}\t${log.remarks}`,
+          `${log.requestedBy}\t${log.lastName}\t${log.roomNo}\t${log.guestReq}\t${log.timeOfRequest}\t${log.timeOfDelivered}\t${log.followUp}\t${log.remarks}\t${log.acknowledgedBy}`,
       )
       .join("\n");
 
